@@ -8,6 +8,14 @@ Convert this to HTML with https://markdowntohtml.com
 - [Getting started with p5js](https://p5js.org/get-started/)
 - [Getting started with ml5js](https://learn.ml5js.org/#/)
 
+### Understanding artificial neural networks
+- [3blue1brown tutorial and video][https://www.3blue1brown.com/lessons/neural-networks]
+
+## Opinions on AI
+- Rodney Brooks - [The seven deadly sins of AI predictions](https://www.technologyreview.com/2017/10/06/241837/the-seven-deadly-sins-of-ai-predictions/)
+- Aaron Hertzmann - [Why computers do not make art](https://medium.com/@aaronhertzmann/why-computers-do-not-make-art-6c7f9bff6b04)
+- [Aaron Hertzmann's blog](https://aaronhertzmann.com)
+
 ### Library Books 
 - H. McCarthy, C. Reas and B. Fry - [Getting started with p5js](https://librarysearch.gold.ac.uk/primo-explore/fulldisplay?docid=44GOL_SYMPHONY272547&vid=44GOL_VU1&search_scope=default_scope&tab=default_tab&lang=en_US&context=L)
 
