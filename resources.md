@@ -23,3 +23,12 @@ Convert this to HTML with https://markdowntohtml.com
 - [Visual Studio Code](https://code.visualstudio.com)
   - Pros: Modern and extensible code editor, huge community, extensions for many programming languages
   - Cons: Steeper learning curve, need to install extensions for each language
+
+## Publications
+### Historical
+- [McCulloch and Pitts (1943) The Logical Calculus of the Ideas Immanent in Nervous Activity](https://www.cs.cmu.edu/~./epxing/Class/10715/reading/McCulloch.and.Pitts.pdf)
+  - The first computational model of artificial neurons
+- [Turing (1950) COMPUTING MACHINERY AND INTELLIGENCE](https://www.cs.ox.ac.uk/activities/ieg/e-library/sources/t_article.pdf)
+- [Rumelhart, Hinton and Williams (1986) Learning representations by back-propagating errors](https://www.iro.umontreal.ca/~vincentp/ift3395/lectures/backprop_old.pdf)
+  - The paper that introduced [backpropagation](https://en.wikipedia.org/wiki/Backpropagation)
+  
