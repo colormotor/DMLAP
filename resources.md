@@ -6,7 +6,6 @@ Convert this to HTML with https://markdowntohtml.com
 
 ## Basics
 - [Getting started with p5js](https://p5js.org/get-started/)
-  -  Comment
 - [Getting started with ml5js](https://learn.ml5js.org/#/)
 
 ### Library Books 
