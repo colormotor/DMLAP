@@ -7,7 +7,7 @@ Here follows a way of tackling that.
 You will need to use Miniforge instead of Anaconda/Miniconda and start the installation from scratch:
 
 - Uninstall Anaconda using [these instructions](https://docs.anaconda.com/anaconda/install/uninstall/)
-- Download Miniforge **Miniforge3-MacOSX-arm64.sh** from [this repo](https://github.com/conda-forge/miniforge/releases/tag/22.11.1-2))
+- Download Miniforge **Miniforge3-MacOSX-arm64.sh** from [this repo](https://github.com/conda-forge/miniforge/releases/tag/22.11.1-2)
 - Navigate to your downloads folder (or wherever you kept this downloaded file) and in your Terminal type the following commands:
     - xcode-select --install
     - chmod +x Miniforge3-MacOSX-arm64.sh
