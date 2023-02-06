@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+#%%
 import matplotlib.pyplot as plt
 import numpy as np
 import cairo
@@ -31,10 +32,6 @@ class Canvas:
         ctx.rectangle(0,0,width,height)
         ctx.fill()
 
-        # ctx.set_source_rgba(1.0, 1.0, 0.0, 0.5)
-        # ctx.arc(10, 50, 5, 0,np.pi*2.)
-        # ctx.fill()
-
         self.width = width
         self.height = height
         self.sur = sur
@@ -42,17 +39,23 @@ class Canvas:
         self.cur_fill = convert_rgba([1.0])
         self.cur_stroke = None
 
+    def no_fill(self):
+        self.fill(None)
+
+    def no_stroke(self):
+        self.stroke(None)
+
     def fill(self, *args):
         if args[0] is None:
             self.cur_fill = None
         else:
-            self.cur_fill = convert_rgba(*args)
+            self.cur_fill = convert_rgba(args)
 
     def stroke(self, *args):
         if args[0] is None:
             self.cur_stroke = None
         else:
-            self.cur_stroke = convert_rgba(*args)
+            self.cur_stroke = convert_rgba(args)
 
     def _fillstroke(self):
         if self.cur_fill is not None:
@@ -67,8 +70,21 @@ class Canvas:
         self._fillstroke()
 
     def line(self, a, b):
-        self.ctx.line(*a, *b)
+        self.ctx.new_path()
+        self.ctx.move_to(*a)
+        self.ctx.line_to(*b)
         self._fillstroke()
+
+    def polygon(self, points):
+        self.polyline(points, True)
+
+    def polyline(self, points, closed=False):
+        self.ctx.new_path()
+        self.ctx.move_to(*points[0])
+        for p in points[1:]:
+            self.ctx.line_to(*p)
+        if closed:
+            self.ctx.close_path()
 
     def background(self, *args):
         self.ctx.set_source_rgb(*convert_rgb(args))
@@ -82,8 +98,13 @@ class Canvas:
 
 if __name__ == '__main__':
     c = Canvas(200, 100)
-    c.background(1,0,0)
+    c.background(0, 0, 0)
+    c.stroke(1)
+    c.no_fill()
     c.circle([20, 50], 10)
+    c.stroke(1, 0, 1)
+    c.line([0,0], [200,60])
+    c.line([0,10], [200,90])
     im = c.get_image()
     plt.imshow(im)
     plt.show()
