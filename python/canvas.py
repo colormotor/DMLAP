@@ -38,6 +38,8 @@ class Canvas:
         self.line_cap('round')
 
     def set_color_scale(self, scale):
+        ''' Set color scale, e.g. if we want to specify colors in the 0-255 range, scale would be 255,
+        or if the colors are in the 0-1 range, scale will be 1'''
         self.color_scale = scale
 
     def no_fill(self):
@@ -98,14 +100,21 @@ class Canvas:
         self._fillstroke()
 
     def rectangle(self, p, size):
+        ''' Draw a rectangle with top left corner `p` and width and height specified in `size`'''
         self.ctx.rectangle(*p, *size)
         self._fillstroke()
 
     def load_image(self, path):
+        ''' Load an image from disk. Currently only supports png!'''
+        if not 'png' in path:
+            print ("Load image only supports PNG files!!!")
+            assert(0)
         surf = cairo.ImageSurface.create_from_png(path)
         return surf
 
-    def image(self, img, pos=[0,0], size=None, alpha=1.0):
+    def image(self, img, pos=[0,0], size=None, opacity=1.0):
+        ''' Draw an image at position pos and with (optional) size and opacity.
+        if size is not specified the imaged will be drawn with its original size'''
         self.ctx.save()
         self.ctx.translate(pos[0], pos[1])
         if size is not None:
@@ -117,18 +126,22 @@ class Canvas:
         self.ctx.restore()
 
     def line(self, a, b):
+        ''' Draw a line between a and b'''
         self.ctx.new_path()
         self.ctx.move_to(*a)
         self.ctx.line_to(*b)
         self._fillstroke()
 
     def shape(self, poly_list, closed=False):
+        ''' Draw a shape represented as a list of polylines, see the ~polyline~ method for the format of each polyline'''
         self.begin_shape()
         for P in poly_list:
             self.polyline(P, closed)
         self.end_shape()
 
     def text(self, pos, text, center=False):
+        ''' Draw text at position
+            if center=True the text will be horizontally centered'''
         if self.cur_fill is not None:
             self.ctx.set_source_rgba(*self.cur_fill)
         if center:
@@ -139,10 +152,13 @@ class Canvas:
         self.ctx.show_text(text)
 
     def polygon(self, points):
+        ''' Draw a closed polyline
+        The polyline is specified as either a list of [x,y] pairs or as a numpy array with a point in each column '''
         self.polyline(points, True)
 
     def polyline(self, points, closed=False):
-        ''' Clear the canvas with a given color '''
+        ''' Draw a polyline (optionally closed).
+        The polyline is specified as either a list of [x,y] pairs or as a numpy array with a point in each column '''
         self.ctx.new_path()
         self.ctx.move_to(*points[0])
         for p in points[1:]:
@@ -164,6 +180,12 @@ class Canvas:
         img = img[:,:,::-1]
         return img
 
+    def get_image_grayscale(self):
+        ''' Returns the canvas image as a grayscale numpy array (in 0-1 range)'''
+        img = self.get_image()
+        img = np.sum(img, axis=-1)/3
+        return img/255
+
     def save_image(self, path):
         ''' Save the canvas to an image'''
         self.surf.write_to_png(path)
@@ -172,13 +194,13 @@ class Canvas:
         import matplotlib.pyplot as plt
         if size is not None:
             plt.figure(figsize=size)
-        plt.imshow(self.get_image())
+        plt.imshow(self.get_image_grayscale())
         plt.show()
 
     def _convert_rgb(self, x):
         if len(x)==1:
             if not is_number(x[0]): # array like input
-                return self._convert_rgb(*x[0])
+                return np.array(x[0])/self.color_scale
             return (x[0]/self.color_scale,
                     x[0]/self.color_scale,
                     x[0]/self.color_scale)
@@ -189,7 +211,7 @@ class Canvas:
     def _convert_rgba(self, x):
         if len(x)==1:
             if not is_number(x[0]): # array like input
-                return self._convert_rgb(*x[0])
+                return np.array(x[0])/self.color_scale
             return (x[0]/self.color_scale,
                     x[0]/self.color_scale,
                     x[0]/self.color_scale, 1.0)
@@ -215,7 +237,7 @@ if __name__ == '__main__':
     c.stroke(255)
     c.no_fill()
     c.stroke_weight(2)
-    c.fill(255)
+    c.fill([255, 0, 0])
     c.text_size(26)
     c.text([13, 22], "A", center=True)
     #c.polyline(np.random.uniform(0, 26, (10, 2)))
