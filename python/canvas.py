@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import cairo
 import numbers
+from math import fmod
 
 
 def is_number(x):
@@ -25,6 +26,7 @@ class Canvas:
         ctx.rectangle(0,0,width,height)
         ctx.fill()
 
+        self._color_mode = 'rgb'
         self.width = width
         self.height = height
         self.surf = surf
@@ -42,23 +44,35 @@ class Canvas:
         or if the colors are in the 0-1 range, scale will be 1'''
         self.color_scale = scale
 
+    @property
+    def surface(self):
+        return self.surf
+
     def no_fill(self):
         self.fill(None)
 
     def no_stroke(self):
         self.stroke(None)
 
+    def color_mode(self, mode):
+        self._color_mode = mode
+
+    def _apply_colormode(self, clr):
+        if self._color_mode == 'hsv':
+            return hsv_to_rgb(clr)
+        return clr
+
     def fill(self, *args):
         if args[0] is None:
             self.cur_fill = None
         else:
-            self.cur_fill = self._convert_rgba(args)
+            self.cur_fill = self._apply_colormode(self._convert_rgba(args))
 
     def stroke(self, *args):
         if args[0] is None:
             self.cur_stroke = None
         else:
-            self.cur_stroke = self._convert_rgba(args)
+            self.cur_stroke = self._apply_colormode(self._convert_rgba(args))
 
     def stroke_weight(self, w):
         self.ctx.set_line_width(w)
@@ -76,6 +90,23 @@ class Canvas:
 
     def text_size(self, size):
         self.ctx.set_font_size(size)
+
+    def push(self):
+        self.ctx.save()
+
+    def pop(self):
+        self.ctx.restore()
+
+    def translate(self, v):
+        self.ctx.translate(*v)
+
+    def scale(self, s):
+        if is_number(s):
+            s = [s, s]
+        self.ctx.scale(*s)
+
+    def rotate(self, rad):
+        self.ctx.rotate(rad)
 
     def _fillstroke(self):
         if self.no_draw: # we are in a begin_shape end_shape pair
@@ -115,6 +146,8 @@ class Canvas:
     def image(self, img, pos=[0,0], size=None, opacity=1.0):
         ''' Draw an image at position pos and with (optional) size and opacity.
         if size is not specified the imaged will be drawn with its original size'''
+        if type(img) == np.ndarray:
+            img = numpy_to_surface(img)
         self.ctx.save()
         self.ctx.translate(pos[0], pos[1])
         if size is not None:
@@ -122,7 +155,7 @@ class Canvas:
             sy = size[1]/img.get_height()
             self.ctx.scale(sx, sy)
         self.ctx.set_source_surface(img)
-        self.ctx.paint_with_alpha(alpha)
+        self.ctx.paint_with_alpha(opacity)
         self.ctx.restore()
 
     def line(self, a, b):
@@ -176,7 +209,7 @@ class Canvas:
 
     def get_image(self):
         ''' Get canvas image as a numpy array '''
-        img = np.ndarray (shape=(self.height, self.width,4), dtype=np.uint8, buffer=self.surf.get_data())[:,:,:3]
+        img = np.ndarray (shape=(self.height, self.width,4), dtype=np.uint8, buffer=self.surf.get_data())[:,:,:3].copy()
         img = img[:,:,::-1]
         return img
 
@@ -190,11 +223,15 @@ class Canvas:
         ''' Save the canvas to an image'''
         self.surf.write_to_png(path)
 
-    def show(self, size=None):
+    def show(self, size=None, title=''):
         import matplotlib.pyplot as plt
         if size is not None:
             plt.figure(figsize=size)
-        plt.imshow(self.get_image_grayscale())
+        else:
+            plt.figure()
+        if title:
+            plt.title(title)
+        plt.imshow(self.get_image())
         plt.show()
 
     def _convert_rgb(self, x):
@@ -230,7 +267,89 @@ class Canvas:
                 x[3]/self.color_scale)
 
 
+def radians( x ):
+    return np.pi/180*x
+
+
+def degrees( x ):
+    return x * (180.0/np.pi)
+
+def numpy_to_surface(arr):
+    import pdb
+    # Get the shape and data type of the numpy array
+    if len(arr.shape) == 2:
+        if arr.dtype == np.uint8:
+            arr = np.dstack([arr, arr, arr, (np.ones(arr.shape)*255).astype(np.uint8)])
+        else:
+            # Assume grayscale 0-1 image
+            arr = np.dstack([arr, arr, arr, np.ones(arr.shape)])
+            arr = (arr * 255).astype(np.uint8)
+    else:
+        if arr.shape[2] == 3:
+            #pdb.set_trace()
+            if arr.dtype == np.uint8:
+                arr = np.dstack([arr, np.ones(arr.shape[:2], dtype=np.uint8)*255])
+            else:
+                arr = np.dstack([arr, np.ones(arr.shape)])
+                arr = (arr * 255).astype(np.uint8)
+        else:
+            if arr.dtype != np.uint8:
+                arr = (arr * 255).astype(np.uint8)
+
+    arr = arr.copy(order='C') # must be "C-contiguous"
+    arr[:, :, :3] = arr[:, :, ::-1][:,:,1:]
+    #pdb.set_trace()
+    surf = cairo.ImageSurface.create_for_data(
+        arr, cairo.FORMAT_ARGB32, arr.shape[1], arr.shape[0])
+
+    return surf
+
+def show_image(im, size=None, title=''):
+    import matplotlib.pyplot as plt
+    if size is not None:
+        plt.figure(figsize=size)
+    else:
+        plt.figure()
+    if title:
+        plt.title(title)
+    plt.imshow(im)
+    plt.show()
+
+
+def hsv_to_rgb(hsva):
+    h, s, v = hsva[:3]
+    a = 1
+    if len(hsva) > 3:
+        a = hsva[3]
+
+    if s == 0.0:
+        r = g = b = v
+    else:
+        h = fmod(h, 1) / (60.0 / 360.0)
+        i = int(h)
+        f = h - i
+        p = v * (1.0 - s)
+        q = v * (1.0 - s * f)
+        t = v * (1.0 - s * (1.0 - f))
+
+        if i == 0:
+            r, g, b = v, t, p
+        elif i == 1:
+            r, g, b = q, v, p
+        elif i == 2:
+            r, g, b = p, v, t
+        elif i == 3:
+            r, g, b = p, q, v
+        elif i == 4:
+            r, g, b = t, p, v
+        else:
+            r, g, b = v, p, q
+
+    return np.array([r,g,b,a])[:len(hsva)]
+
 if __name__ == '__main__':
+    from skimage import io
+
     c = Canvas(26, 26)
     c.background(0, 0, 0)
 
@@ -239,7 +358,13 @@ if __name__ == '__main__':
     c.stroke_weight(2)
     c.fill([255, 0, 0])
     c.text_size(26)
-    c.text([13, 22], "A", center=True)
+    c.text([13, 22], "B", center=True)
+    im = np.vstack([np.linspace(0, 1, 26) for _ in range(26)]).T
+
+    im = np.dstack([im, np.zeros_like(im), np.zeros_like(im), np.ones_like(im)])
+    #im = io.imread('./images/test2.png')
+    print(im.shape, im.dtype)
+    c.image(im) #np.random.uniform(0, 1, (26, 26)))
     #c.polyline(np.random.uniform(0, 26, (10, 2)))
     c.show()
 
