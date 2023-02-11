@@ -12,8 +12,9 @@ def is_number(x):
 
 
 class Canvas:
-    ''' Creates a "canvas" like object that behaves similarly to p5js'''
+    ''' Creates a a pycairo surface that behaves similarly to p5js'''
     def __init__(self, width, height):
+        ''' Initialize Canvas with given width and height'''
         # See https://pycairo.readthedocs.io/en/latest/reference/context.html
         surf = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
         ctx = cairo.Context(surf)
@@ -267,15 +268,18 @@ class Canvas:
                 x[3]/self.color_scale)
 
 
-def radians( x ):
+def radians(x):
+    ''' Get radians given x degrees'''
     return np.pi/180*x
 
 
-def degrees( x ):
+def degrees(x):
+    ''' Get degrees given x radians'''
     return x * (180.0/np.pi)
 
+
 def numpy_to_surface(arr):
-    import pdb
+    ''' Convert numpy array to a pycairo surface'''
     # Get the shape and data type of the numpy array
     if len(arr.shape) == 2:
         if arr.dtype == np.uint8:
@@ -304,7 +308,9 @@ def numpy_to_surface(arr):
 
     return surf
 
-def show_image(im, size=None, title=''):
+
+def show_image(im, size=None, title='', cmap='gray'):
+    ''' Display a (numpy) image'''
     import matplotlib.pyplot as plt
     if size is not None:
         plt.figure(figsize=size)
@@ -312,7 +318,29 @@ def show_image(im, size=None, title=''):
         plt.figure()
     if title:
         plt.title(title)
-    plt.imshow(im)
+    plt.imshow(im, cmap)
+    plt.show()
+
+
+def show_images(images, ncols, size=None, title='', cmap='gray'):
+    ''' Display multiple images in a grid'''
+    import matplotlib.pyplot as plt
+    from matplotlib.gridspec import GridSpec
+    n = len(images)
+    nrows = int(np.ceil(n/ncols))
+    print(nrows)
+    if size is not None:
+        plt.figure(figsize=size)
+    else:
+        plt.figure()
+    if title:
+        plt.title(title)
+    gs = GridSpec(nrows, ncols)
+    for i, img in enumerate(images):
+        ax = plt.subplot(gs[i])
+        plt.imshow(img, cmap)
+        ax.axis('off')
+    plt.tight_layout()
     plt.show()
 
 
