@@ -3,7 +3,7 @@
 .ob-jupyter
 
 # Model folder
-python/models
+# python/models
 
 # Logs
 logs
