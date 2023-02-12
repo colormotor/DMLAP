@@ -125,6 +125,7 @@ class Canvas:
             self.ctx.stroke()
 
     def circle(self, center, radius):
+        self.ctx.new_sub_path()
         self.ctx.arc(*center, radius, 0,np.pi*2.)
         self._fillstroke()
 
@@ -229,7 +230,7 @@ class Canvas:
         ''' Save the canvas to an image'''
         self.surf.write_to_png(path)
 
-    def show(self, size=None, title='', axis=True):
+    def show(self, size=None, title='', axis=False):
         import matplotlib.pyplot as plt
         if size is not None:
             plt.figure(figsize=(size[0]/100, size[1]/100))
@@ -301,7 +302,7 @@ def numpy_to_surface(arr):
             if arr.dtype == np.uint8:
                 arr = np.dstack([arr, np.ones(arr.shape[:2], dtype=np.uint8)*255])
             else:
-                arr = np.dstack([arr, np.ones(arr.shape)])
+                arr = np.dstack([arr, np.ones(arr.shape[:2])])
                 arr = (arr * 255).astype(np.uint8)
         else:
             if arr.dtype != np.uint8:
