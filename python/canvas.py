@@ -55,8 +55,9 @@ class Canvas:
     def no_stroke(self):
         self.stroke(None)
 
-    def color_mode(self, mode):
+    def color_mode(self, mode, scale=255):
         self._color_mode = mode
+        self.color_scale = scale
 
     def _apply_colormode(self, clr):
         if self._color_mode == 'hsv':
@@ -115,7 +116,10 @@ class Canvas:
 
         if self.cur_fill is not None:
             self.ctx.set_source_rgba(*self.cur_fill)
-            self.ctx.fill_preserve()
+            if self.cur_stroke is not None:
+                self.ctx.fill_preserve()
+            else:
+                self.ctx.fill()
         if self.cur_stroke is not None:
             self.ctx.set_source_rgba(*self.cur_stroke)
             self.ctx.stroke()
@@ -183,7 +187,8 @@ class Canvas:
             self.ctx.move_to(pos[0]-w/2, pos[1])
         else:
             self.ctx.move_to(*pos)
-        self.ctx.show_text(text)
+        self.ctx.text_path(text)
+        self.ctx.fill()
 
     def polygon(self, points):
         ''' Draw a closed polyline
@@ -224,15 +229,17 @@ class Canvas:
         ''' Save the canvas to an image'''
         self.surf.write_to_png(path)
 
-    def show(self, size=None, title=''):
+    def show(self, size=None, title='', axis=True):
         import matplotlib.pyplot as plt
         if size is not None:
-            plt.figure(figsize=size)
+            plt.figure(figsize=(size[0]/100, size[1]/100))
         else:
-            plt.figure()
+            plt.figure(figsize=(self.width/100, self.height/100))
         if title:
             plt.title(title)
         plt.imshow(self.get_image())
+        if not axis:
+            plt.gca().axis('off')
         plt.show()
 
     def _convert_rgb(self, x):
