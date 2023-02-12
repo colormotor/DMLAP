@@ -185,7 +185,7 @@ class Canvas:
             self.ctx.set_source_rgba(*self.cur_fill)
         if center:
             (x, y, w, h, dx, dy) = self.ctx.text_extents(text)
-            self.ctx.move_to(pos[0]-w/2, pos[1])
+            self.ctx.move_to(pos[0]-w/2-x, pos[1])
         else:
             self.ctx.move_to(*pos)
         self.ctx.text_path(text)
