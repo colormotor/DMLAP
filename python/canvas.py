@@ -22,7 +22,6 @@ class Canvas:
 
         ctx.set_fill_rule(cairo.FILL_RULE_EVEN_ODD)
 
-        #ctx.scale(width, height)
         ctx.set_source_rgba(0.0, 0.0, 0.0, 255.0)
         ctx.rectangle(0,0,width,height)
         ctx.fill()
@@ -99,17 +98,49 @@ class Canvas:
     def pop(self):
         self.ctx.restore()
 
-    def translate(self, v):
+    def translate(self, *args):
+        """Translate by specifying `x` and `y` offset.
+
+        Args:
+            The offset can be specified as an array/list (e.g `c.translate([x,y])`
+            or as single arguments (e.g. `c.translate(x, y)`)
+        Returns:
+            Nothing
+        """
+        if len(args)==1:
+            v = args[0]
+        else:
+            v = args
         self.ctx.translate(*v)
 
-    def scale(self, s):
-        if is_number(s):
-            s = [s, s]
+    def scale(self, *args):
+        ''' Apply a scaling transformation.
+        Providing a single number will apply a uniform transformation.
+        Providing a pair of number will scale in the x and y directions.
+        The scale can be specified as an array/list (e.g `c.scale([x,y])` 
+        or as single arguments (e.g. `c.scale(x, y)`)'''
+        if len(args)==1:
+            s = args[0]
+            if is_number(s):
+                s = [s, s]
+        else:
+            s = args
         self.ctx.scale(*s)
 
-    def rotate(self, rad):
-        self.ctx.rotate(rad)
+    def rotate(self, theta):
+        ''' Rotate by `theta` radians'''
+        self.ctx.rotate(theta)
 
+    def rotate_deg(self, deg):
+        ''' Rotate using degrees'''
+        self.ctx.rotate(radians(deg))
+
+    def hsv(self, *args):
+        if len(args) > 1:
+            return hsv_to_rgb(np.array(args))*self.color_scale
+        else:
+            return hsv_to_rgb(np.array(args[0]))*self.color_scale
+            
     def _fillstroke(self):
         if self.no_draw: # we are in a begin_shape end_shape pair
             return
@@ -124,23 +155,99 @@ class Canvas:
             self.ctx.set_source_rgba(*self.cur_stroke)
             self.ctx.stroke()
 
-    def circle(self, center, radius):
+    def rectangle(self, *args): 
+        ''' Draw a rectangle given top-left corner, width and heght. 
+        Input arguments can be in the following formats:
+         `[topleft_x, topleft_y], [width, height]`,
+         `[topleft_x, topleft_y], width, height`,
+         `topleft_x, topleft_y, width, height`'''
+
+        if len(args) == 2:
+            p, size = args
+        if len(args) == 3:
+            p = args[0]
+            size = args[1:]
+        if len(args) == 4:
+            p = args[:2]
+            size = args[2:]
+        self.ctx.rectangle(*p, *size)
+        self._fillstroke()
+
+    def circle(self, *args): #center, radius):
+        ''' Draw a circle given center and radius
+        Input arguments can be in the following formats:
+         `[center_x, center_y], radius`,
+         `center_x, center_y, raidus`'''
+         
+        if len(args)==3:
+            center = args[:2]
+            radius = args[2]
+        else:
+            center, radius = args
         self.ctx.new_sub_path()
         self.ctx.arc(*center, radius, 0,np.pi*2.)
         self._fillstroke()
 
+    def ellipse(self, *args):
+        ''' Draw an ellipse with center, width and height. 
+        Input arguments can be in the following formats:
+         `[center_x, center_y], [width, height]`,
+         `[center_x, center_y], width, height`,
+         `center_x, center_y, width, height`'''
+
+        if len(args) == 3:
+            center = args[0]
+            w, h = args[1:]
+        elif len(args) == 4:
+            center = args[:2]
+            w, h = args[2:]
+        else:
+            center = args[0]
+            w, h = args[1]
+
+        self.push()
+        self.translate(center)
+        self.scale([w/2,h/2])
+        self.ctx.new_sub_path()
+        self.ctx.arc(0, 0, 1, 0,np.pi*2.)
+        if self.cur_fill is not None:
+            self.ctx.set_source_rgba(*self.cur_fill)
+            if self.cur_stroke is not None:
+                self.ctx.fill_preserve()
+            else:
+                self.ctx.fill()
+        self.pop()
+        
+        if self.cur_stroke is not None:
+            self.ctx.set_source_rgba(*self.cur_stroke)
+            self.ctx.stroke()
+
+    def line(self, *args): 
+        ''' Draw a line between given its end points.
+        Input arguments can be in the following formats:
+         `[x1, y1], [x2, y2]`,
+         `x1, y1, x2, y2`'''
+
+        if len(args) == 2:
+            a, b = args
+        if len(args) == 4:
+            a = args[:2]
+            b = args[2:]  
+        self.ctx.new_path()
+        self.ctx.move_to(*a)
+        self.ctx.line_to(*b)
+        self._fillstroke()
+
     def begin_shape(self):
+        ''' Begin drawing a compound shape'''
         self.no_draw = True
 
     def end_shape(self):
+        ''' End drawing a compound shape'''
         self.no_draw = False
         self._fillstroke()
 
-    def rectangle(self, p, size):
-        ''' Draw a rectangle with top left corner `p` and width and height specified in `size`'''
-        self.ctx.rectangle(*p, *size)
-        self._fillstroke()
-
+    
     def load_image(self, path):
         ''' Load an image from disk. Currently only supports png!'''
         if not 'png' in path:
@@ -149,12 +256,28 @@ class Canvas:
         surf = cairo.ImageSurface.create_from_png(path)
         return surf
 
-    def image(self, img, pos=[0,0], size=None, opacity=1.0):
+    def image(self, img, *args, opacity=1.0):
         ''' Draw an image at position pos and with (optional) size and opacity.
         if size is not specified the imaged will be drawn with its original size'''
         if type(img) == np.ndarray:
             img = numpy_to_surface(img)
         self.ctx.save()
+        if len(args) == 1: #[x, y]   
+            pos = args[0]
+            size = [img.get_width(), img.get_height()]
+        elif len(args) == 2: 
+            if is_number(args[0]): # x, y
+                pos = args
+                size = [img.get_width(), img.get_height()]
+            else: # [x, y], [w, h]
+                pos, size = args
+        elif len(args) == 4: # x, y, w, h
+            pos = args[:2] 
+            size = args[2:]
+        else:
+            print("Unexpected number of arguments for image")
+            assert(0)
+
         self.ctx.translate(pos[0], pos[1])
         if size is not None:
             sx = size[0]/img.get_width()
@@ -164,13 +287,7 @@ class Canvas:
         self.ctx.paint_with_alpha(opacity)
         self.ctx.restore()
 
-    def line(self, a, b):
-        ''' Draw a line between a and b'''
-        self.ctx.new_path()
-        self.ctx.move_to(*a)
-        self.ctx.line_to(*b)
-        self._fillstroke()
-
+    
     def shape(self, poly_list, closed=False):
         ''' Draw a shape represented as a list of polylines, see the ~polyline~ method for the format of each polyline'''
         self.begin_shape()
@@ -191,15 +308,26 @@ class Canvas:
         self.ctx.text_path(text)
         self.ctx.fill()
 
-    def polygon(self, points):
-        ''' Draw a closed polyline
-        The polyline is specified as either a list of [x,y] pairs or as a numpy array with a point in each column '''
-        self.polyline(points, True)
+    def polygon(self, *args):
+        ''' Draw a *closed* polygon
+        The polyline is specified as either:
+        - a list of `[x,y]` pairs (e.g. `[[0, 100], [200, 100], [200, 200]]`)
+        - a numpy array with shape `(n, 2)`, representing `n` points (a point for each row and a coordinate for each column)'''
+        self.polyline(*args, closed=True)
 
-    def polyline(self, points, closed=False):
-        ''' Draw a polyline (optionally closed).
-        The polyline is specified as either a list of [x,y] pairs or as a numpy array with a point in each column '''
+    def polyline(self, *args, closed=False):
+        ''' Draw a polyline. 
+        The polyline is specified as either:
+        - a list of `[x,y]` pairs (e.g. `[[0, 100], [200, 100], [200, 200]]`)
+        - a numpy array with shape `(n, 2)`, representing `n` points (a point for each row and a coordinate for each column)
+        
+        To close the polyline set the named closed argument to `True`, e.g. `c.polyline(points, closed=True)`.
+        '''
         self.ctx.new_path()
+        if len(args)==1:
+            points = args[0]
+        else:
+            points = args
         self.ctx.move_to(*points[0])
         for p in points[1:]:
             self.ctx.line_to(*p)
