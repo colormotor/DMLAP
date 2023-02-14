@@ -77,7 +77,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import cairo
 import numbers
-from math import fmod
+from math import fmod, pi
 
 
 def is_number(x):
@@ -87,7 +87,7 @@ def is_number(x):
 class Canvas:
     ''' Creates a a pycairo surface that behaves similarly to p5js'''
     def __init__(self, width, height):
-        """Initialize Canvas with given width and height
+        """Initialize Canvas with given `width` and `height`
         """
         # See https://pycairo.readthedocs.io/en/latest/reference/context.html
         surf = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
@@ -113,9 +113,13 @@ class Canvas:
         self.ctx.set_font_size(16)
         self.line_cap('round')
 
+        # Constants
+        self.PI = pi
+        self.TWO_PI = pi*2
+
     def set_color_scale(self, scale):
-        """Set color scale, e.g. if we want to specify colors in the 0-255 range, scale would be 255,
-        or if the colors are in the 0-1 range, scale will be 1"""
+        """Set color scale, e.g. if we want to specify colors in the `0`-`255` range, scale would be `255`,
+        or if the colors are in the `0`-`1` range, scale will be `1`"""
 
         self.color_scale = scale
 
@@ -151,9 +155,14 @@ class Canvas:
             self.cur_stroke = self._apply_colormode(self._convert_rgba(args))
 
     def stroke_weight(self, w):
+        """Set the line width"""
         self.ctx.set_line_width(w)
 
     def line_cap(self, cap):
+        """Specify the 'cap' for lines.
+        Args:
+        cap (string): can be one of "butt", "round" or "square"
+        """
         caps = {'butt': cairo.LINE_CAP_BUTT,
                 'round': cairo.LINE_CAP_ROUND,
                 'square': cairo.LINE_CAP_SQUARE}
@@ -242,12 +251,10 @@ class Canvas:
 
         Args:
         Input arguments can be in the following formats:
-         `[topleft_x, topleft_y], [width, height]`,
-         `[topleft_x, topleft_y], width, height`,
-         `topleft_x, topleft_y, width, height`
+         - `[topleft_x, topleft_y], [width, height]`,
+         - `[topleft_x, topleft_y], width, height`,
+         - `topleft_x, topleft_y, width, height`
 
-        Returns:
-        None
         """
 
         if len(args) == 2:
@@ -261,16 +268,53 @@ class Canvas:
         self.ctx.rectangle(*p, *size)
         self._fillstroke()
 
+    def rect(self, *args):
+        """Draw a rectangle given top-left corner, width and heght.
+
+        Args:
+        Input arguments can be in the following formats:
+         - `[topleft_x, topleft_y], [width, height]`,
+         - `[topleft_x, topleft_y], width, height`,
+         - `topleft_x, topleft_y, width, height`
+
+        """
+        return self.rectangle(*args)
+
+    def quad(self, *args):
+        """Draws a quadrangle given four points
+
+        Args:
+        Input arguments can be in the following formats:
+         - `a, b, c, d` (Four points specified as lists/tuples/numpy arrays
+         - `x1, y1, x2, y2, x3, y3, x4, y4`
+        """
+
+        if len(args)==4:
+            self.polygon(args)
+        else:
+            self.polygon([[args[i*2], args[i*2+1]] for i in range(4)])
+
+    def triangle(self, *args):
+        """Draws a triangle given three points
+
+        Args:
+        Input arguments can be in the following formats:
+         - `a, b, c` (Four points specified as lists/tuples/numpy arrays
+         - `x1, y1, x2, y2, x3, y3`
+        """
+
+        if len(args)==3:
+            self.polygon(args)
+        else:
+            self.polygon([[args[i*2], args[i*2+1]] for i in range(3)])
+
     def circle(self, *args):
         """Draw a circle given center and radius
 
         Args:
         Input arguments can be in the following formats:
-         `[center_x, center_y], radius`,
-         `center_x, center_y, raidus`
-
-        Returns:
-        None
+        - `[center_x, center_y], radius`,
+        - `center_x, center_y, raidus`
         """
 
         if len(args)==3:
@@ -287,12 +331,9 @@ class Canvas:
 
         Args:
         Input arguments can be in the following formats:
-         `[center_x, center_y], [width, height]`,
-         `[center_x, center_y], width, height`,
-         `center_x, center_y, width, height`
-
-        Returns:
-        None
+        - `[center_x, center_y], [width, height]`,
+        - `[center_x, center_y], width, height`,
+        - `center_x, center_y, width, height`
         """
 
         if len(args) == 3:
@@ -322,6 +363,46 @@ class Canvas:
             self.ctx.set_source_rgba(*self.cur_stroke)
             self.ctx.stroke()
 
+    def arc(self, *args):
+        """Draw an arc given the center of the ellipse `x, y`
+        the size of the ellipse `w, h` and the initial and final angles
+        in radians  `start, stop`.
+
+        Args:
+          Input arguments can be in the following formats:
+          -`x, y, w, h, start, stop`
+          -`[x, y]', '[w, h]', '[start, stop]'
+          -`[x, y]', w, h, start, stop`
+
+        """
+        if len(args) == 3:
+            x, y = args[0]
+            w, h = args[1]
+            start, stop = args[2]
+        elif len(args) == 6:
+            x, y, w, h, start, stop = args
+        else:
+            x, y = args[0]
+            w, h, start, stop = args[1:]
+
+        self.push()
+        self.translate(x, y)
+        self.scale(w/2,h/2)
+        self.ctx.new_sub_path()
+        self.ctx.arc(0, 0, 1, start, stop)
+        if self.cur_fill is not None:
+            self.ctx.set_source_rgba(*self.cur_fill)
+            if self.cur_stroke is not None:
+                self.ctx.fill_preserve()
+            else:
+                self.ctx.fill()
+        self.pop()
+
+        if self.cur_stroke is not None:
+            self.ctx.set_source_rgba(*self.cur_stroke)
+            self.ctx.stroke()
+
+
     def line(self, *args):
         """Draw a line between given its end points.
 
@@ -329,9 +410,6 @@ class Canvas:
         Input arguments can be in the following formats:
          `[x1, y1], [x2, y2]`,
          `x1, y1, x2, y2`
-
-        Returns:
-        None
         """
 
         if len(args) == 2:
@@ -355,7 +433,8 @@ class Canvas:
 
     
     def load_image(self, path):
-        ''' Load an image from disk. Currently only supports png! Use external loading into NumPy instead'''
+        '''Load an image from disk. Currently only supports png! Use external
+        loading into NumPy instead'''
         if not 'png' in path:
             print ("Load image only supports PNG files!!!")
             assert(0)
@@ -368,15 +447,14 @@ class Canvas:
         Args:
         img: The input image. Can be either a numpy array or a pyCairo surface (e.g. another canvas).
         *args: position and size can be specified with the following formats:
-            x, y:  position only
-            x, y, w, h: position and size
-            [x, y]: position only (also a numpy array or tuple are valid)
-            [x, y], [w, h]: position and size
+            `x, y`:  position only
+            `x, y, w, h`: position and size
+            `[x, y]`: position only (also a numpy array or tuple are valid)
+            `[x, y], [w, h]`: position and size
         if the position is not specified, the original image dimensions will be used
-        opacity: a value between 0 and 1 specifying image opacity.
 
-        Returns:
-        None
+        `opacity`: a value between 0 and 1 specifying image opacity.
+
         """
 
         if type(img) == np.ndarray:
@@ -409,15 +487,22 @@ class Canvas:
 
     
     def shape(self, poly_list, closed=False):
-        ''' Draw a shape represented as a list of polylines, see the ~polyline~ method for the format of each polyline'''
+        '''Draw a shape represented as a list of polylines, see the ~polyline~
+        method for the format of each polyline
+        '''
+
         self.begin_shape()
         for P in poly_list:
             self.polyline(P, closed)
         self.end_shape()
 
     def text(self, pos, text, center=False):
-        ''' Draw text at position
-            if center=True the text will be horizontally centered'''
+        ''' Draw text at a given position
+
+        Args:
+            if center=True the text will be horizontally centered
+        '''
+
         if self.cur_fill is not None:
             self.ctx.set_source_rgba(*self.cur_fill)
         if center:

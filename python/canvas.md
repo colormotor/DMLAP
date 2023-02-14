@@ -92,7 +92,7 @@ Creates a a pycairo surface that behaves similarly to p5js
 def __init__(width, height)
 ```
 
-Initialize Canvas with given width and height
+Initialize Canvas with given `width` and `height`
 
 <a id="canvas.Canvas.set_color_scale"></a>
 
@@ -102,8 +102,32 @@ Initialize Canvas with given width and height
 def set_color_scale(scale)
 ```
 
-Set color scale, e.g. if we want to specify colors in the 0-255 range, scale would be 255,
-or if the colors are in the 0-1 range, scale will be 1
+Set color scale, e.g. if we want to specify colors in the `0`-`255` range, scale would be `255`,
+or if the colors are in the `0`-`1` range, scale will be `1`
+
+<a id="canvas.Canvas.stroke_weight"></a>
+
+#### stroke\_weight
+
+```python
+def stroke_weight(w)
+```
+
+Set the line width
+
+<a id="canvas.Canvas.line_cap"></a>
+
+#### line\_cap
+
+```python
+def line_cap(cap)
+```
+
+Specify the 'cap' for lines.
+
+**Arguments**:
+
+- `cap` _string_ - can be one of "butt", "round" or "square"
 
 <a id="canvas.Canvas.translate"></a>
 
@@ -179,14 +203,58 @@ Draw a rectangle given top-left corner, width and heght.
 **Arguments**:
 
   Input arguments can be in the following formats:
-  `[topleft_x, topleft_y], [width, height]`,
-  `[topleft_x, topleft_y], width, height`,
-  `topleft_x, topleft_y, width, height`
-  
+  - `[topleft_x, topleft_y], [width, height]`,
+  - `[topleft_x, topleft_y], width, height`,
+  - `topleft_x, topleft_y, width, height`
 
-**Returns**:
+<a id="canvas.Canvas.rect"></a>
 
-  None
+#### rect
+
+```python
+def rect(*args)
+```
+
+Draw a rectangle given top-left corner, width and heght.
+
+**Arguments**:
+
+  Input arguments can be in the following formats:
+  - `[topleft_x, topleft_y], [width, height]`,
+  - `[topleft_x, topleft_y], width, height`,
+  - `topleft_x, topleft_y, width, height`
+
+<a id="canvas.Canvas.quad"></a>
+
+#### quad
+
+```python
+def quad(*args)
+```
+
+Draws a quadrangle given four points
+
+**Arguments**:
+
+  Input arguments can be in the following formats:
+  - `a, b, c, d` (Four points specified as lists/tuples/numpy arrays
+  - `x1, y1, x2, y2, x3, y3, x4, y4`
+
+<a id="canvas.Canvas.triangle"></a>
+
+#### triangle
+
+```python
+def triangle(*args)
+```
+
+Draws a triangle given three points
+
+**Arguments**:
+
+  Input arguments can be in the following formats:
+  - `a, b, c` (Four points specified as lists/tuples/numpy arrays
+  - `x1, y1, x2, y2, x3, y3`
 
 <a id="canvas.Canvas.circle"></a>
 
@@ -201,13 +269,8 @@ Draw a circle given center and radius
 **Arguments**:
 
   Input arguments can be in the following formats:
-  `[center_x, center_y], radius`,
-  `center_x, center_y, raidus`
-  
-
-**Returns**:
-
-  None
+  - `[center_x, center_y], radius`,
+  - `center_x, center_y, raidus`
 
 <a id="canvas.Canvas.ellipse"></a>
 
@@ -222,14 +285,28 @@ Draw an ellipse with center, width and height.
 **Arguments**:
 
   Input arguments can be in the following formats:
-  `[center_x, center_y], [width, height]`,
-  `[center_x, center_y], width, height`,
-  `center_x, center_y, width, height`
-  
+  - `[center_x, center_y], [width, height]`,
+  - `[center_x, center_y], width, height`,
+  - `center_x, center_y, width, height`
 
-**Returns**:
+<a id="canvas.Canvas.arc"></a>
 
-  None
+#### arc
+
+```python
+def arc(*args)
+```
+
+Draw an arc given the center of the ellipse `x, y`
+the size of the ellipse `w, h` and the initial and final angles
+in radians  `start, stop`.
+
+**Arguments**:
+
+  Input arguments can be in the following formats:
+  -`x, y, w, h, start, stop`
+  -`[x, y]', '[w, h]', '[start, stop]'
+  -`[x, y]', w, h, start, stop`
 
 <a id="canvas.Canvas.line"></a>
 
@@ -246,11 +323,6 @@ Draw a line between given its end points.
   Input arguments can be in the following formats:
   `[x1, y1], [x2, y2]`,
   `x1, y1, x2, y2`
-  
-
-**Returns**:
-
-  None
 
 <a id="canvas.Canvas.begin_shape"></a>
 
@@ -280,7 +352,8 @@ End drawing a compound shape
 def load_image(path)
 ```
 
-Load an image from disk. Currently only supports png! Use external loading into NumPy instead
+Load an image from disk. Currently only supports png! Use external
+loading into NumPy instead
 
 <a id="canvas.Canvas.image"></a>
 
@@ -296,17 +369,13 @@ Draw an image at position with (optional) size and (optional) opacity
 
 - `img` - The input image. Can be either a numpy array or a pyCairo surface (e.g. another canvas).
 - `*args` - position and size can be specified with the following formats:
-  x, y:  position only
-  x, y, w, h: position and size
-  [x, y]: position only (also a numpy array or tuple are valid)
-  [x, y], [w, h]: position and size
+  `x, y`:  position only
+  `x, y, w, h`: position and size
+  `[x, y]`: position only (also a numpy array or tuple are valid)
+  `[x, y], [w, h]`: position and size
   if the position is not specified, the original image dimensions will be used
-- `opacity` - a value between 0 and 1 specifying image opacity.
   
-
-**Returns**:
-
-  None
+- ``opacity`` - a value between 0 and 1 specifying image opacity.
 
 <a id="canvas.Canvas.shape"></a>
 
@@ -316,7 +385,8 @@ Draw an image at position with (optional) size and (optional) opacity
 def shape(poly_list, closed=False)
 ```
 
-Draw a shape represented as a list of polylines, see the ~polyline~ method for the format of each polyline
+Draw a shape represented as a list of polylines, see the ~polyline~
+method for the format of each polyline
 
 <a id="canvas.Canvas.text"></a>
 
@@ -326,8 +396,11 @@ Draw a shape represented as a list of polylines, see the ~polyline~ method for t
 def text(pos, text, center=False)
 ```
 
-Draw text at position
-if center=True the text will be horizontally centered
+Draw text at a given position
+
+**Arguments**:
+
+  if center=True the text will be horizontally centered
 
 <a id="canvas.Canvas.polygon"></a>
 
