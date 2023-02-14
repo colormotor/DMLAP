@@ -1,4 +1,77 @@
 #!/usr/bin/env python3
+"""Simplistic utilty to mimic [P5js](https://p5js.org) in Python/Jupyter notebooks.
+
+## Dependencies
+This module depends on matplotlib, numpy and and pycairo.
+To install these with conda do:
+```
+conda install -c conda-forge matplotlib
+conda install -c conda-forge pycairo
+```
+
+When using Google Colab, matplotlib and numpy will already be installed. To
+install pycairo add and execute the following in a code cell:
+```
+!apt-get install libcairo2-dev libjpeg-dev libgif-dev
+!pip install pycairo
+```
+
+## Usage
+Place the `canvas.py` file in the same directory as your notebook.
+If using Google Colab fetch the latest version of the module with
+```
+!wget https://raw.githubusercontent.com/colormotor/DMLAP/main/python/canvas.py
+```
+
+## Example
+The following is the conversion of a simple example in P5js to the `canvas` API.
+In Javascript we may have:
+
+```Javascript
+function setup() {
+  createCanvas(512, 512);
+  // Clear background to black
+  background(0);
+  // Set stroke only and draw circle
+  stroke(128);
+  noFill();
+  strokeWeight(5);
+  circle(width/2, height/2, 200);
+  // Draw red text
+  fill(255, 0, 0);
+  noStroke();
+  textSize(30);
+  textAlign(CENTER);
+  text("Hello world", width/2, 40);
+}
+
+function draw() {
+}
+```
+
+The equivalent Python version will be:
+
+```Python
+import canvas
+
+# Create our canvas object
+c = canvas.Canvas(512, 512)
+
+# Clear background to black
+c.background(0)
+# Set stroke only and draw circle
+c.stroke(128)
+c.no_fill()
+c.stroke_weight(5)
+c.circle(c.width/2, c.height/2, 100)
+# Draw red text
+c.fill(255, 0, 0)
+c.text_size(30)
+c.text([c.width/2, 40], "Hello world", center=True)
+c.show()
+```
+"""
+
 #%%
 import matplotlib.pyplot as plt
 import numpy as np
@@ -14,7 +87,8 @@ def is_number(x):
 class Canvas:
     ''' Creates a a pycairo surface that behaves similarly to p5js'''
     def __init__(self, width, height):
-        ''' Initialize Canvas with given width and height'''
+        """Initialize Canvas with given width and height
+        """
         # See https://pycairo.readthedocs.io/en/latest/reference/context.html
         surf = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
         ctx = cairo.Context(surf)
@@ -40,8 +114,9 @@ class Canvas:
         self.line_cap('round')
 
     def set_color_scale(self, scale):
-        ''' Set color scale, e.g. if we want to specify colors in the 0-255 range, scale would be 255,
-        or if the colors are in the 0-1 range, scale will be 1'''
+        """Set color scale, e.g. if we want to specify colors in the 0-255 range, scale would be 255,
+        or if the colors are in the 0-1 range, scale will be 1"""
+
         self.color_scale = scale
 
     @property
@@ -114,11 +189,18 @@ class Canvas:
         self.ctx.translate(*v)
 
     def scale(self, *args):
-        ''' Apply a scaling transformation.
+        """Apply a scaling transformation.
+
+        Args:
         Providing a single number will apply a uniform transformation.
         Providing a pair of number will scale in the x and y directions.
-        The scale can be specified as an array/list (e.g `c.scale([x,y])` 
+        The scale can be specified as an array/list (e.g `c.scale([x,y])`
         or as single arguments (e.g. `c.scale(x, y)`)'''
+
+        Returns:
+        type: nothing
+        """
+
         if len(args)==1:
             s = args[0]
             if is_number(s):
@@ -155,12 +237,18 @@ class Canvas:
             self.ctx.set_source_rgba(*self.cur_stroke)
             self.ctx.stroke()
 
-    def rectangle(self, *args): 
-        ''' Draw a rectangle given top-left corner, width and heght. 
+    def rectangle(self, *args):
+        """Draw a rectangle given top-left corner, width and heght.
+
+        Args:
         Input arguments can be in the following formats:
          `[topleft_x, topleft_y], [width, height]`,
          `[topleft_x, topleft_y], width, height`,
-         `topleft_x, topleft_y, width, height`'''
+         `topleft_x, topleft_y, width, height`
+
+        Returns:
+        None
+        """
 
         if len(args) == 2:
             p, size = args
@@ -173,12 +261,18 @@ class Canvas:
         self.ctx.rectangle(*p, *size)
         self._fillstroke()
 
-    def circle(self, *args): #center, radius):
-        ''' Draw a circle given center and radius
+    def circle(self, *args):
+        """Draw a circle given center and radius
+
+        Args:
         Input arguments can be in the following formats:
          `[center_x, center_y], radius`,
-         `center_x, center_y, raidus`'''
-         
+         `center_x, center_y, raidus`
+
+        Returns:
+        None
+        """
+
         if len(args)==3:
             center = args[:2]
             radius = args[2]
@@ -189,11 +283,17 @@ class Canvas:
         self._fillstroke()
 
     def ellipse(self, *args):
-        ''' Draw an ellipse with center, width and height. 
+        """Draw an ellipse with center, width and height.
+
+        Args:
         Input arguments can be in the following formats:
          `[center_x, center_y], [width, height]`,
          `[center_x, center_y], width, height`,
-         `center_x, center_y, width, height`'''
+         `center_x, center_y, width, height`
+
+        Returns:
+        None
+        """
 
         if len(args) == 3:
             center = args[0]
@@ -222,11 +322,17 @@ class Canvas:
             self.ctx.set_source_rgba(*self.cur_stroke)
             self.ctx.stroke()
 
-    def line(self, *args): 
-        ''' Draw a line between given its end points.
+    def line(self, *args):
+        """Draw a line between given its end points.
+
+        Args:
         Input arguments can be in the following formats:
          `[x1, y1], [x2, y2]`,
-         `x1, y1, x2, y2`'''
+         `x1, y1, x2, y2`
+
+        Returns:
+        None
+        """
 
         if len(args) == 2:
             a, b = args
@@ -249,7 +355,7 @@ class Canvas:
 
     
     def load_image(self, path):
-        ''' Load an image from disk. Currently only supports png!'''
+        ''' Load an image from disk. Currently only supports png! Use external loading into NumPy instead'''
         if not 'png' in path:
             print ("Load image only supports PNG files!!!")
             assert(0)
@@ -257,8 +363,22 @@ class Canvas:
         return surf
 
     def image(self, img, *args, opacity=1.0):
-        ''' Draw an image at position pos and with (optional) size and opacity.
-        if size is not specified the imaged will be drawn with its original size'''
+        """Draw an image at position with (optional) size and (optional) opacity
+
+        Args:
+        img: The input image. Can be either a numpy array or a pyCairo surface (e.g. another canvas).
+        *args: position and size can be specified with the following formats:
+            x, y:  position only
+            x, y, w, h: position and size
+            [x, y]: position only (also a numpy array or tuple are valid)
+            [x, y], [w, h]: position and size
+        if the position is not specified, the original image dimensions will be used
+        opacity: a value between 0 and 1 specifying image opacity.
+
+        Returns:
+        None
+        """
+
         if type(img) == np.ndarray:
             img = numpy_to_surface(img)
         self.ctx.save()
