@@ -12,7 +12,7 @@ import cv2
 w, h = 512, 512
 
 def random_latent_vector():
-    return np.random.normal(size=100)*1.0
+    return np.random.normal(size=100)*0.5
 
 a = random_latent_vector()
 b = random_latent_vector()
@@ -21,7 +21,7 @@ b = random_latent_vector()
 n_frames = 20
 
 # Load generator model
-generator = keras.models.load_model('../models/dcgan_dmlap/e15_generator.hd5')
+generator = keras.models.load_model('../models/dcgan_dmlap/e40_generator.hd5')
 print(generator.summary())
 
 # linear interpolation
