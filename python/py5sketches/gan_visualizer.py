@@ -7,17 +7,18 @@ from numpy.linalg import norm
 from py5canvas import canvas
 import cv2
 
-
 # Output size
 w, h = 512, 512
+# Make sure this matches the latent dimension you trained on
+latent_dim = 100 
 
 def random_latent_vector():
-    return np.random.normal(size=100)*0.5
+    return np.random.normal(size=latent_dim)*1.0 # Try varying this multiplier
 
 a = random_latent_vector()
 b = random_latent_vector()
 
-# Number of frames for interpolation
+# Number of frames for interpolation (more, slower)
 n_frames = 20
 
 # Load generator model
