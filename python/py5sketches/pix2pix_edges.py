@@ -10,7 +10,7 @@ import cv2
 w, h = 512, 512
 vid = canvas.VideoInput(size=(w, h))
 
-model_path = '../models/edges2comics/e25_generator.hd5'
+model_path = '../models/edges2comics/e50_generator.hd5'
 # Load pix2pix model
 generator = keras.models.load_model(model_path)
 print(generator.summary())

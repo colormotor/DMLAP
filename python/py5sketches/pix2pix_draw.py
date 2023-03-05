@@ -11,7 +11,7 @@ w, h = 512, 256
 # Empty result initially
 result = np.zeros((256, 256, 3))
 
-model_path = '../models/pix2pix_landmarks_3/e100_generator.hd5'
+model_path = '../models/landmarks2rembrandt/e100_generator.hd5'
 
 # Load pix2pix model
 generator = keras.models.load_model(model_path)
