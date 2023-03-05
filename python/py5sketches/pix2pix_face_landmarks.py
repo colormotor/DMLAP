@@ -7,9 +7,12 @@ from tensorflow import keras
 import cv2
 
 # Create video input
-vid = canvas.VideoInput(size=(512, 512))
+w, h = 512, 512
+vid = canvas.VideoInput(size=(w, h))
+
+model_path = '../models/pix2pix_landmarks_3/e100_generator.hd5'
 # Load pix2pix model
-generator = keras.models.load_model('../models/pix2pixlandmarks.h5')
+generator = keras.models.load_model(model_path)
 print(generator.summary())
 
 # Runs the model on an input image
@@ -19,7 +22,7 @@ def generate_image(model, img):
     return (res*0.5 + 0.5) # Scale to [0, 1] (Canvas is fine with that)
 
 def setup():
-    sketch.create_canvas(512, 512)
+    sketch.create_canvas(w, h)
     sketch.frame_rate(20) # Our framerate will be pretty low anyhow
 
 # Gives us back a sequence of polylines for each face feature
@@ -37,7 +40,6 @@ def landmark_polylines(landmarks):
                list(range(60, 68)) + [60]]
     return [landmarks[I] for I in indices]
 
-
 def draw():
     c = sketch.canvas
 
@@ -48,7 +50,7 @@ def draw():
     landmarks = extract_face_landmarks(frame)
 
     c.stroke_weight(2)
-    c.stroke(255) #, 0, 0)
+    c.stroke(255)
     c.no_fill()
 
     if landmarks is not None: # If no landmaks can be found landmark will be "None"
@@ -57,17 +59,17 @@ def draw():
             c.polyline(path)
 
         # Try to mess with the image
-        #for i in range(3):
-           #c.rect(np.random.uniform(0, c.width, 2), np.random.uniform(10, 60, 2)*[0.1,7.0])
+        # for i in range(3):
+        #    c.rect(np.random.uniform(0, c.width, 2), np.random.uniform(10, 60, 2)*[0.1,7.0])
 
         # Get the current canvas image and feed it to pix2pix
+
         img = c.get_image()
         # This requires resizing to 256x256
+
         res = generate_image(generator, cv2.resize(img, [256, 256]))
         # And then drawing it on the whole canvas
         c.image(res, [0,0], [c.width, c.height])
-
-    # This will draw the (low) framerate
-    # c.text_size(10)
-    # c.fill(255)
-    # c.text([10, 20], '%.3f fps'%(1.0 / sketch.delta_time))
+    else:
+        # If no landmarks draw video input
+        c.image(frame, [0,0], [c.width, c.height])
